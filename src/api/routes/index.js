@@ -1,10 +1,14 @@
 const express = require('express')
 const router = express.Router()
+const {urlGoogle} = require('../googleModule')
 
-router.get('/test', async function(req, res, next) {
+router.get('/googleLink', async function(req, res, next) {
   try{
-    res.json({ body: 'test' })
+    const url = urlGoogle();
+    console.log(url);
+    res.json({ body: url })
   } catch(err){
+    console.log(err);
     next(err)
   }
 });
