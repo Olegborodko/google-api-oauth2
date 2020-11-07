@@ -13,15 +13,22 @@ const oauth2Client = new google.auth.OAuth2(
   googleConfig.redirect
 );
 
+const oauth2 = google.oauth2({
+  auth: oauth2Client,
+  version: 'v2'
+});
+
 const defaultScope = [
-  'https://www.googleapis.com/auth/plus.me',
+  'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/userinfo.email',
 ];
 
 function getConnectionUrl(auth) {
   return auth.generateAuthUrl({
     // 'online' (default) or 'offline' (gets refresh_token)
-    // access_type: 'offline',
+    // how I understand 'offline' will automatically 
+    // refresh access_token
+    access_type: 'offline',
     prompt: 'consent', // access type and approval prompt will force a new refresh token to be made each time signs in
     scope: defaultScope
   });
@@ -33,11 +40,27 @@ function urlGoogle() {
   return url;
 }
 
-async function tokensFromCode(code) {
+async function initial(code) {
   const {tokens} = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens);
   return tokens;
 }
 
+async function getInfo() {
+  return await oauth2.userinfo.get()
+}
+
+function tokenInfo() {
+
+}
+
+// oauth2Client.on('tokens', (tokens) => {
+//   if (tokens.refresh_token) {
+//     console.log('===>' + tokens.refresh_token);
+//   }
+//   console.log('===>' + tokens.access_token);
+// });
+
 module.exports.urlGoogle = urlGoogle
-module.exports.tokensFromCode = tokensFromCode
+module.exports.initial = initial
+module.exports.getInfo = getInfo

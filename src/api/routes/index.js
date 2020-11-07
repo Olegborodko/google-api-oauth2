@@ -2,7 +2,8 @@ const express = require('express')
 const router = express.Router()
 const {
   urlGoogle, 
-  tokensFromCode
+  initial,
+  getInfo
 } = require('../googleModule')
 
 router.get('/googleLink', async function(req, res, next) {
@@ -18,7 +19,17 @@ router.get('/googleLink', async function(req, res, next) {
 router.post('/getToken', async function(req, res, next) {
   try{
     const param = req.body
-    const result = await tokensFromCode(param.code)
+    const result = await initial(param.code)
+    res.json({ body: result })
+  } catch(err){
+    console.log(err)
+    next(err)
+  }
+});
+
+router.get('/getUserInfo', async function(req, res, next) {
+  try{
+    const result = await getInfo()
     res.json({ body: result })
   } catch(err){
     console.log(err)
