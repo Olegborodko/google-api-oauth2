@@ -5,6 +5,7 @@ const {
   initial,
   getInfo
 } = require('../googleModule')
+const mailer = require('../nodemailer');
 
 router.get('/googleLink', async function(req, res, next) {
   try{
@@ -30,6 +31,17 @@ router.post('/getToken', async function(req, res, next) {
 router.get('/getUserInfo', async function(req, res, next) {
   try{
     const result = await getInfo()
+    res.json({ body: result })
+  } catch(err){
+    console.log(err)
+    next(err)
+  }
+});
+
+router.post('/sendMail', async function(req, res, next) {
+  try{
+    const params = req.body
+    const result = await mailer(params)
     res.json({ body: result })
   } catch(err){
     console.log(err)

@@ -2,9 +2,9 @@ require('dotenv').config();
 const { google } = require('googleapis');
 
 const googleConfig = {
-  clientId: process.env.REACT_G_CLIENT_ID,
-  clientSecret: process.env.REACT_G_CLIENT_SECRET,
-  redirect: process.env.REACT_G_REDIRECT_URL
+  clientId: process.env.G_CLIENT_ID,
+  clientSecret: process.env.G_CLIENT_SECRET,
+  redirect: process.env.G_REDIRECT_URL
 };
 
 const oauth2Client = new google.auth.OAuth2(
@@ -21,6 +21,7 @@ const oauth2 = google.oauth2({
 const defaultScope = [
   'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/userinfo.email',
+  'https://mail.google.com'
 ];
 
 function getConnectionUrl(auth) {
@@ -56,9 +57,9 @@ function tokenInfo() {
 
 // oauth2Client.on('tokens', (tokens) => {
 //   if (tokens.refresh_token) {
-//     console.log('===>' + tokens.refresh_token);
+//     console.log('refresh===>' + tokens.refresh_token);
 //   }
-//   console.log('===>' + tokens.access_token);
+//   console.log('access===>' + tokens.access_token);
 // });
 
 module.exports.urlGoogle = urlGoogle

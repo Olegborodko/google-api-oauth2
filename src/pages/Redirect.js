@@ -1,53 +1,68 @@
 import React, { useState, useEffect } from 'react';
-const axios = require('axios');
-axios.defaults.baseURL = process.env.REACT_APP_API_ENDPOINT + '/api'
+const {
+  getUserInfo,
+  getToken,
+  sendMail
+} = require('../requests');
 
-function getUserInfo(){
-  return axios.get(`/getUserInfo`)
-    .then(function (res) {
-      if (res && res.data && res.data.body){
-        return res.data.body
-      }
-      return false
-    })
-    .catch(function (error) {
-      console.log(error)
-      return false
-    })
+async function trySendMail(params) {
+  const result = await sendMail(params)
+  console.log(result)
 }
 
 function Redirect(props) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [picture, setPicture] = useState('')
+  const [info, setInfo] = useState({})
+  const [access, setAccess] = useState(true)
 
   useEffect(() => {
     const code = new URLSearchParams(props.location.search).get('code')
-    axios.post(`/getToken`, {code})
-    .then(function (res) {
-      if (res && res.data && res.data.body){
-        localStorage.setItem("token", res.data.body.access_token);
-        getUserInfo().then((res) => {
-          if (res && res.data) {
-            setName(res.data.name)
-            setEmail(res.data.email)
-            setPicture(res.data.picture)
-          }
-        })
-      }
-    })
-    .catch(function (error) {
+    const error = new URLSearchParams(props.location.search).get('error')
+    if (!code || error) { 
+      setAccess(false)
+      return 
+    }
+
+    async function fetchData() {
+      const tokens = await getToken(code);
+      const userInfo = await getUserInfo();
       
-    })
+      if (!tokens || !userInfo) {
+        setAccess(false)
+        return
+      }
+
+      setInfo({
+        refreshToken: tokens.refresh_token,
+        name: userInfo.name,
+        email: userInfo.email,
+        picture: userInfo.picture,
+
+        emailTo: process.env.REACT_APP_G_EMAIL,
+        subject: 'test subject',
+        text: 'test text'
+      })
+    }
+    fetchData();
+
   }, [])
 
   return (
     <>
-      {name}
-      <br/>
-      {email}
-      <br/>
-      <img src={picture}/>
+      {access 
+        ? 
+        <div>
+          {info.name}
+          <br/>
+          {info.email}
+          <br/>
+          <img src={info.picture} alt='user' />
+          <div onClick={() => trySendMail(info)}>
+            sendMail
+          </div>
+        </div> 
+        :
+        'access denied'  
+      }
     </>
   );
 }
