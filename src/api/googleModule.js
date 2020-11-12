@@ -1,22 +1,5 @@
 require('dotenv').config();
-const { google } = require('googleapis');
-
-const googleConfig = {
-  clientId: process.env.G_CLIENT_ID,
-  clientSecret: process.env.G_CLIENT_SECRET,
-  redirect: process.env.G_REDIRECT_URL
-};
-
-const oauth2Client = new google.auth.OAuth2(
-  googleConfig.clientId,
-  googleConfig.clientSecret,
-  googleConfig.redirect
-);
-
-const oauth2 = google.oauth2({
-  auth: oauth2Client,
-  version: 'v2'
-});
+const { OAuth2Client } = require('google-auth-library');
 
 const defaultScope = [
   'https://www.googleapis.com/auth/userinfo.profile',
@@ -24,44 +7,51 @@ const defaultScope = [
   'https://mail.google.com'
 ];
 
-function getConnectionUrl(auth) {
-  return auth.generateAuthUrl({
-    // 'online' (default) or 'offline' (gets refresh_token)
-    // how I understand 'offline' will automatically 
-    // refresh access_token
-    access_type: 'offline',
-    prompt: 'consent', // access type and approval prompt will force a new refresh token to be made each time signs in
-    scope: defaultScope
-  });
+const oAuth2Client = getOAuth2Client();
+
+oAuth2Client.on('tokens', (tokens) => {
+  if (tokens.refresh_token) {
+    console.log('refresh===>' + tokens.refresh_token);
+  }
+  console.log('access===>' + tokens.access_token);
+});
+
+function getOAuth2Client() {
+  return new OAuth2Client(
+    process.env.G_CLIENT_ID,
+    process.env.G_CLIENT_SECRET,
+    process.env.G_REDIRECT_URL)
 }
 
 function urlGoogle() {
-  const auth = oauth2Client;
-  const url = getConnectionUrl(auth);
-  return url;
+  return oAuth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: defaultScope,
+  });
 }
 
-async function initial(code) {
-  const {tokens} = await oauth2Client.getToken(code)
-  oauth2Client.setCredentials(tokens);
-  return tokens;
+async function initial(code){
+  const r = await oAuth2Client.getToken(code);
+  oAuth2Client.setCredentials(r.tokens);
+  return r.tokens;
 }
 
-async function getInfo() {
-  return await oauth2.userinfo.get()
+async function request(param) {
+  const url = param.url;
+  if (param.refresh_token && param.access_token) {
+    const oAuth2Client = getOAuth2Client();
+    // oAuth2Client.credentials = {
+    //   refresh_token: param.refresh_token,
+    //   access_token: param.access_token
+    // }
+    oAuth2Client.setCredentials({
+      refresh_token: param.refresh_token
+    });
+    return await oAuth2Client.request({ url });
+  }
+  return await oAuth2Client.request({ url });
 }
-
-function tokenInfo() {
-
-}
-
-// oauth2Client.on('tokens', (tokens) => {
-//   if (tokens.refresh_token) {
-//     console.log('refresh===>' + tokens.refresh_token);
-//   }
-//   console.log('access===>' + tokens.access_token);
-// });
 
 module.exports.urlGoogle = urlGoogle
 module.exports.initial = initial
-module.exports.getInfo = getInfo
+module.exports.request = request

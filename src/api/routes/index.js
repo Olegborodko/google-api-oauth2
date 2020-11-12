@@ -3,7 +3,7 @@ const router = express.Router()
 const {
   urlGoogle, 
   initial,
-  getInfo
+  request
 } = require('../googleModule')
 const mailer = require('../nodemailer');
 
@@ -28,9 +28,10 @@ router.post('/getToken', async function(req, res, next) {
   }
 });
 
-router.get('/getUserInfo', async function(req, res, next) {
+router.post('/request', async function(req, res, next) {
   try{
-    const result = await getInfo()
+    const param = req.body
+    const result = await request(param)
     res.json({ body: result })
   } catch(err){
     console.log(err)

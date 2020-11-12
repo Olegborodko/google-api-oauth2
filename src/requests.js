@@ -1,21 +1,21 @@
 const axios = require('axios');
 axios.defaults.baseURL = process.env.REACT_APP_API_ENDPOINT + '/api';
 
-module.exports.getUserInfo = () => {
-  return axios.get(`/getUserInfo`)
-    .then(function (res) {
-      if (res && 
-        res.data && 
-        res.data.body && 
-        res.data.body.data) {
-        return res.data.body.data
-      }
-      return false
-    })
-    .catch(function (error) {
-      console.log(error)
-      return false
-    })
+module.exports.request = (obj) => {
+  return axios.post(`/request`, obj)
+  .then(function (res) {
+    if (res && 
+      res.data && 
+      res.data.body && 
+      res.data.body.data) {
+      return res.data.body.data
+    }
+    return false
+  })
+  .catch(function (error) {
+    console.log(error)
+    return false
+  })
 }
 
 module.exports.getToken = (code) => {
