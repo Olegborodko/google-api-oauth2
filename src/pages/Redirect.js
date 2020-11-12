@@ -2,7 +2,9 @@ import React, { useState, useLayoutEffect } from 'react';
 const {
   request,
   getToken,
-  sendMail
+  sendMail,
+  updateRefreshToken,
+  getRefreshToken
 } = require('../requests');
 
 async function trySendMail(params) {
@@ -22,19 +24,26 @@ function Redirect(props) {
       return 
     }
 
-    async function fetchData() {
+    async function fromRefreshToken(userId) {
+      return await getRefreshToken(userId)
+    }
+
+    async function initial() {
       const tokens = await getToken(code);
-      const userInfo = await request({
-        url: 'https://www.googleapis.com/oauth2/v2/userinfo'
-      });
-      
-      if (!tokens || !userInfo) {
+
+      if (!tokens) {
         setAccess(false)
         return
       }
 
-      localStorage.setItem('refresh_token', tokens.refresh_token);
-      localStorage.setItem('access_token', tokens.access_token);
+      const userInfo = await request({
+        url: 'https://www.googleapis.com/oauth2/v2/userinfo'
+      });
+      
+      if (!userInfo) {
+        setAccess(false)
+        return
+      }
 
       setInfo( prev => {
         return {
@@ -50,48 +59,70 @@ function Redirect(props) {
         }
       })
       setAccess(true)
+
+      localStorage.setItem('userId', userInfo.id)
+
+      await updateRefreshToken({
+        googleId: userInfo.id,
+        refreshToken: tokens.refresh_token
+      })
     }
 
-    if (!localStorage.getItem('refresh_token') && !code) {
+    async function refreshPage(refresh_token){
+      const res = await request({
+        url: 'https://www.googleapis.com/oauth2/v2/userinfo',
+        refresh_token
+      });
+
+      if (!res) {
+        setAccess(false)
+        return
+      }
+
+      setInfo( prev => {
+        return {
+          ...prev,
+          refreshToken: localStorage.getItem('refresh_token'),
+          name: res.name,
+          email: res.email,
+          picture: res.picture,
+
+          emailTo: process.env.REACT_APP_G_EMAIL,
+          subject: 'test subject',
+          text: 'test text'
+        }
+        })
+      setAccess(true)
+    }
+
+    if (!localStorage.getItem('userId') && !code) {
       setAccess(false)
       return
     }
-    if (!localStorage.getItem('refresh_token') && code) {
-      // new refresh_token and access_token
-      fetchData();
-      return
-    }
-    if (localStorage.getItem('refresh_token') && code) {
-      async function refreshPage(){
-        const res = await request({
-          url: 'https://www.googleapis.com/oauth2/v2/userinfo', 
-          access_token: localStorage.getItem('refresh_token'), 
-          refresh_token: localStorage.getItem('access_token')
-        });
 
-        setInfo( prev => {
-          return {
-            ...prev,
-            refreshToken: localStorage.getItem('refresh_token'),
-            name: res.name,
-            email: res.email,
-            picture: res.picture,
-  
-            emailTo: process.env.REACT_APP_G_EMAIL,
-            subject: 'test subject',
-            text: 'test text'
-          }
-        })
-        setAccess(true)
-      }
-      refreshPage();
+    if (!localStorage.getItem('userId')) {
+      initial();
+      return;
+    }
+
+    if (localStorage.getItem('userId')) {
+      fromRefreshToken(localStorage.getItem('userId')).then((res) => {
+        const refresh_token = res;
+        refreshPage(refresh_token)
+      })
     }
 
   }, [])
 
-  function logout() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+  async function logout() {
+    const userId = localStorage.getItem('userId')
+    if (userId) {
+      await updateRefreshToken({
+        googleId: localStorage.getItem('userId'),
+        refreshToken: ''
+      })
+      localStorage.removeItem('userId');
+    }
     setAccess(false);
   }
 

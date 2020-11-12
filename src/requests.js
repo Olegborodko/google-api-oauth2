@@ -45,3 +45,40 @@ module.exports.sendMail = (params) => {
       return false
     }) 
 }
+
+module.exports.getRefreshToken = (googleId) => {
+  if (!googleId) {
+    return false;
+  }
+  return axios.get(`/getRefreshToken`, {
+    params: {
+      googleId
+    }
+  })
+    .then(function (res) {
+      if (res && 
+        res.data &&
+        res.data.body) {
+        return res.data.body
+      }
+      return false
+    })
+    .catch(function (error) {
+      console.log(error)
+      return false
+    })
+}
+
+module.exports.updateRefreshToken = (params) => {
+  return axios.post(`/updateRefreshToken`, params)
+    .then(function (res) {
+      if (res && res.data && res.data.body){
+        return res.data.body
+      }
+      return false
+    })
+    .catch(function (error) {
+      console.log(error)
+      return false
+    }) 
+}

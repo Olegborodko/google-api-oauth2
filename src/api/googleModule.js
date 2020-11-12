@@ -9,12 +9,12 @@ const defaultScope = [
 
 const oAuth2Client = getOAuth2Client();
 
-oAuth2Client.on('tokens', (tokens) => {
-  if (tokens.refresh_token) {
-    console.log('refresh===>' + tokens.refresh_token);
-  }
-  console.log('access===>' + tokens.access_token);
-});
+// oAuth2Client.on('tokens', (tokens) => {
+//   if (tokens.refresh_token) {
+//     console.log('refresh===>' + tokens.refresh_token);
+//   }
+//   console.log('access===>' + tokens.access_token);
+// });
 
 function getOAuth2Client() {
   return new OAuth2Client(
@@ -38,7 +38,7 @@ async function initial(code){
 
 async function request(param) {
   const url = param.url;
-  if (param.refresh_token && param.access_token) {
+  if (param.refresh_token) {
     const oAuth2Client = getOAuth2Client();
     // oAuth2Client.credentials = {
     //   refresh_token: param.refresh_token,
