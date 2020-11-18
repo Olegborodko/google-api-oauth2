@@ -3,7 +3,7 @@ try oauth2 and nodemailer
 ##### Work was done using
 - React
 - Node <br>
--- googleapis <br>
+-- google-auth-library <br>
 -- nodemailer <br>
 - google api
 
